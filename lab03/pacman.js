@@ -1,190 +1,225 @@
 let score = 0;
+let size = 20;
+let level = 1;
+let levelCount = 5;
+let ghostSpeed = 200;
+let games = [];
+let currGame;
 let winFlag = false;
 let loseFlag = false;
 let fruitEnabled = false;
 let ghostAlive = true;
-let gameInitState;
+let lockMovement = false;
+let prev;
+
 
 function createGame(len) {
-    let game = new Array(len).fill(".");
+    let currGame = new Array(len).fill(".");
     const pacmanPosition = Math.floor(Math.random() * len);
-    game[pacmanPosition] = "C";
+    currGame[pacmanPosition] = "C";
     let ghostPosition;
     do {
         ghostPosition = Math.floor(Math.random() * len);
     } while (ghostPosition === pacmanPosition);
-    game[ghostPosition] = "^";
+    currGame[ghostPosition] = "^";
+    prev = ".";
     let fruitPosition;
     do {
         fruitPosition = Math.floor(Math.random() * len);
     } while (fruitPosition === pacmanPosition || fruitPosition === ghostPosition);
-    game[fruitPosition] = "@";
-    return game;
-}
+    currGame[fruitPosition] = "@";
 
-function createGameStart(actualGame, len) {
-    let initGame = new Array(len).fill(".");
-    const pacmanPosition = actualGame.indexOf("C");
-    initGame[pacmanPosition] = "C";
-    const ghostPosition = actualGame.indexOf("^");
-    initGame[ghostPosition] = "^";
-    const fruitPosition = actualGame.indexOf("@");
-    initGame[fruitPosition] = "@";
-    return initGame;    
-}
-
-
-
-function findPacman(game) {
-    return game.indexOf("C");
-}
-
-function moveLeft(game) {
-    const pacmanPos = findPacman(game);
-    if (pacmanPos > 0) {
-        if (game[pacmanPos - 1] === ".") {
-            score++;
-        } else if (game[pacmanPos - 1] === "@") {
-            fruitEnabled = true;
-        } else if (game[pacmanPos - 1] === "^" && fruitEnabled) {
-            ghostAlive = false;
-        } else if (game[pacmanPos - 1] === "^" && ! fruitEnabled) {
-            loseFlag = true;
-        }
-        game[pacmanPos] = " ";
-        game[pacmanPos - 1] = "C";
-    }
-    else {
-        if (game[pacmanPos - 1] === ".") {
-            score++;
-        } else if (game[pacmanPos - 1] === "@") {
-            fruitEnabled = true;
-        } else if (game[pacmanPos - 1] === "^" && fruitEnabled) {
-            ghostAlive = false;
-        } else if (game[pacmanPos - 1] === "^" && ! fruitEnabled) {
-            loseFlag = true;
-        }
-        game[pacmanPos] = " ";
-        game[game.length - 1] = "C";
-    }
-    renderGame(game);
-    checkFinish(game);
-    return game;
-}
-
-function moveRight(game) {
-    const pacmanPos = findPacman(game);
-    if (pacmanPos < game.length - 1) {
-        if (game[pacmanPos + 1] === ".") {
-            score++;
-        } else if (game[pacmanPos + 1] === "@") {
-            fruitEnabled = true;
-        } else if (game[pacmanPos + 1] === "^" && fruitEnabled) {
-            ghostAlive = false;
-        } else if (game[pacmanPos + 1] === "^" && ! fruitEnabled) {
-            loseFlag = true;
-        }
-        game[pacmanPos] = " ";
-        game[pacmanPos + 1] = "C";
-    }
-    else {
-        if (game[pacmanPos + 1] === ".") {
-            score++;
-        } else if (game[pacmanPos + 1] === "@") {
-            fruitEnabled = true;
-        } else if (game[pacmanPos + 1] === "^" && fruitEnabled) {
-            ghostAlive = false;
-        } else if (game[pacmanPos + 1] === "^" && ! fruitEnabled) {
-            loseFlag = true;
-        }
-        game[pacmanPos] = " ";
-        game[0] = "C";
-    }
-    renderGame(game);
-    checkFinish(game);
-    return game;
-}
-
-function checkLevelCompletion(game) {
-    return game.every(tile => tile !== ".");
-}
-
-function resetGame(game) {
-    score = 0;
-    return createGame(game.length);
-}
-
-function moveGhost(game) {
-    if (! winFlag && ! loseFlag) {
-        const ghostPos = game.indexOf("^");
-        const directions = [-1, 1];
-        const move = directions[Math.floor(Math.random() * directions.length)];
-        newPos = ghostPos + move;
-        if (newPos === game.length) {
-            newPos = 0;
-        } else if (newPos === -1) {
-            newPos = game.length - 1;
-        }
-        if (ghostAlive) {
-            if (game[newPos] === ".") {
-                game[ghostPos] = ".";
-                game[newPos] = "^";
-            } else if (game[newPos] === " ") {
-                game[ghostPos] = " ";
-                game[newPos] = "^";
-            }  else if (game[newPos] === "@") {
-                game[ghostPos] = "@";
-                game[newPos] = "^";
-            } else if (game[newPos] === "C" && ! fruitEnabled) {
-                loseFlag = true;               
-            } else if (game[newPos] === "C" && fruitEnabled) {
-                ghostAlive = false;
-            }
-        }
-        checkFinish(game);
-        renderGame(game);
-        return game;
-    }
-}
-
-function renderGame(game) {
-    if (winFlag || loseFlag) {
-        document.getElementById('game-board').textContent = "Game Finished";
-        document.getElementById('score-board').textContent = 'Score = ' + score;
-    } else {
-        document.getElementById('game-board').textContent = game.join(" ");
-        document.getElementById('score-board').textContent = 'Score = ' + score;
-    }
-}
-
-function checkFinish(game) {
-    if (! game.includes(".")) {
-        game = [];
-        winFlag = true;
-        document.getElementById('game-board').textContent = "Game Finished";
-        document.getElementById('ws-condition').textContent = "You win!";
-    } else if (loseFlag) {
-        loseFlag = true;
-        document.getElementById('game-board').textContent = "Game Finished";
-        document.getElementById('ws-condition').textContent = "You Lose! Pacman caught by ghost!";
-    }
+    document.getElementById("level-card").textContent = "Level: " + level;
+    return currGame;
 }
 
 document.addEventListener('keydown', function(event) {
-    if (event.key === 'ArrowLeft') {
-        moveLeft(game);
-    } else if (event.key === 'ArrowRight') {
-        moveRight(game);
+    if (!lockMovement && level <= levelCount) {
+        currGame = games[level - 1];
+        if (event.key === 'ArrowLeft') {
+            moveLeft(currGame);
+        } else if (event.key === 'ArrowRight') {
+            moveRight(currGame);
+        }
     }
 });
 
+function moveLeft(currGame) {
+    const pacmanPos = currGame.indexOf("C");
+    if (pacmanPos > 0) {
+        if (currGame[pacmanPos - 1] === ".") {
+            score++;
+        } else if (currGame[pacmanPos - 1] === "@") {
+            fruitEnabled = true;
+        } else if (currGame[pacmanPos - 1] === "^" && fruitEnabled) {
+            ghostAlive = false;
+        } else if (currGame[pacmanPos - 1] === "^" && ! fruitEnabled) {
+            loseFlag = true;
+        }
+        currGame[pacmanPos] = " ";
+        currGame[pacmanPos - 1] = "C";
+    }
+    else {
+        if (currGame[pacmanPos - 1] === ".") {
+            score++;
+        } else if (currGame[pacmanPos - 1] === "@") {
+            fruitEnabled = true;
+        } else if (currGame[pacmanPos - 1] === "^" && fruitEnabled) {
+            ghostAlive = false;
+        } else if (currGame[pacmanPos - 1] === "^" && ! fruitEnabled) {
+            loseFlag = true;
+        }
+        currGame[pacmanPos] = " ";
+        currGame[currGame.length - 1] = "C";
+    }
+    renderGame(currGame);
+    checkFinish(currGame);
+    return currGame;
+}
+
+function moveRight(currGame) {
+    const pacmanPos = currGame.indexOf("C");
+    if (pacmanPos < currGame.length - 1) {
+        if (currGame[pacmanPos + 1] === ".") {
+            score++;
+        } else if (currGame[pacmanPos + 1] === "@") {
+            fruitEnabled = true;
+        } else if (currGame[pacmanPos + 1] === "^" && fruitEnabled) {
+            ghostAlive = false;
+        } else if (currGame[pacmanPos + 1] === "^" && ! fruitEnabled) {
+            loseFlag = true;
+        }
+        currGame[pacmanPos] = " ";
+        currGame[pacmanPos + 1] = "C";
+    }
+    else {
+        if (currGame[pacmanPos + 1] === ".") {
+            score++;
+        } else if (currGame[pacmanPos + 1] === "@") {
+            fruitEnabled = true;
+        } else if (currGame[pacmanPos + 1] === "^" && fruitEnabled) {
+            ghostAlive = false;
+        } else if (currGame[pacmanPos + 1] === "^" && ! fruitEnabled) {
+            loseFlag = true;
+        }
+        currGame[pacmanPos] = " ";
+        currGame[0] = "C";
+    }
+    renderGame(currGame);
+    checkFinish(currGame);
+    return currGame;
+}
+
 setInterval(() => {
     if (!winFlag && !loseFlag) {
-        moveGhost(game);
+        moveGhost();
     }
-}, 500);
+}, ghostSpeed);
 
-let size = 10;
-let game = createGame(size);
-gameInitState = createGameStart(game, size);
-renderGame(game);
+function moveGhost() {
+    if (level <= levelCount && ! lockMovement) {
+        currGame = games[level - 1];
+        if (! winFlag && ! loseFlag) {
+            const ghostPos = currGame.indexOf("^");
+            const moveTowardsPacman = Math.random() < 0.65;
+            if (ghostPos < currGame.indexOf("C")) {
+                if (fruitEnabled) {
+                    move = moveTowardsPacman ? -1 : 1;
+                } else {
+                    move = moveTowardsPacman ? 1 : -1;
+                }
+              } else if (ghostPos > currGame.indexOf("C")) {
+                if (fruitEnabled) {
+                    move = moveTowardsPacman ? 1 : -1;
+                } else {
+                    move = moveTowardsPacman ? -1 : 1;
+                }
+              } else {
+                move = directions[Math.floor(Math.random() * directions.length)];
+            }
+            newPos = ghostPos + move;
+            if (newPos === currGame.length) {
+                newPos = 0;
+            } else if (newPos === -1) {
+                newPos = currGame.length - 1;
+            }
+            if (ghostAlive) {
+                if (currGame[newPos] === ".") {
+                    currGame[ghostPos] = prev;
+                    currGame[newPos] = "^";
+                    prev = ".";
+                } else if (currGame[newPos] === " ") {
+                    currGame[ghostPos] = prev;
+                    currGame[newPos] = "^";
+                    prev = " ";
+                }  else if (currGame[newPos] === "@") {
+                    currGame[ghostPos] = prev;
+                    currGame[newPos] = "^";
+                    prev = "@";
+                } else if (currGame[newPos] === "C" && ! fruitEnabled) {
+                    loseFlag = true;            
+                } else if (currGame[newPos] === "C" && fruitEnabled) {
+                    ghostAlive = false;
+                    currGame[ghostPos] = prev;
+                    currGame[newPos] = "C";
+                }
+            }
+            checkFinish(currGame);
+            renderGame(currGame);
+            return currGame;
+        }
+    }
+}
+
+function renderGame(currGame) {
+    if (! loseFlag && level <= levelCount) {
+        document.getElementById('game-board').textContent = currGame.join(" ");
+        document.getElementById('score-board').textContent = 'Score = ' + score;
+    }
+}
+
+function checkFinish(currGame) {
+    if (level <= levelCount) {
+        if (! currGame.includes(".")) {
+            currGame = [];
+            winFlag = true;
+        }
+    } else {
+        lockMovement = true;
+        level = levelCount;
+        document.getElementById('game-board').textContent = "Game Finished";
+        document.getElementById('ws-condition').textContent = "You win!";
+        document.getElementById('score-board').textContent = 'Score = ' + score;
+        document.getElementById("level-card").textContent = "Level: " + level;
+        level = levelCount + 1;
+    }
+    if (winFlag || loseFlag) {
+        if (loseFlag) {
+            currGame = [];
+            document.getElementById('game-board').textContent = "Game Finished";
+            document.getElementById('ws-condition').textContent = "You Lose! Pacman caught by ghost!";
+            document.getElementById("level-card").textContent = "Level: " + level;
+        } else if (level <= levelCount && winFlag) {
+            lockMovement = true;
+            document.getElementById('ws-condition').textContent = "Level: " + level + " COMPLETE!";
+            level++;
+            document.getElementById("level-card").textContent = "Level: " + level;
+            currGame = [];
+            currGame = games[level - 1];
+            prev = ".";
+            winFlag = false;
+            loseFlag = false;
+            fruitEnabled = false;
+            ghostAlive = true;
+            renderGame(currGame);
+            checkFinish(currGame);
+            lockMovement = false;
+        }
+    } 
+}
+
+for (i = 0; i < levelCount; i++) {
+    games[i] = createGame(size);
+}
+currGame = games[0];
+renderGame(currGame);
