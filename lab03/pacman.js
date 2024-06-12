@@ -1,8 +1,8 @@
 let score = 0;
 let size = 20;
 let level = 1;
-let levelCount = 5;
-let ghostSpeed = 200;
+let levelCount = 500;
+let ghostSpeed = 100;
 let games = [];
 let currGame;
 let winFlag = false;
@@ -11,6 +11,7 @@ let fruitEnabled = false;
 let ghostAlive = true;
 let lockMovement = false;
 let prev;
+let weight = 1;
 
 
 function createGame(len) {
@@ -121,7 +122,7 @@ function moveGhost() {
         currGame = games[level - 1];
         if (! winFlag && ! loseFlag) {
             const ghostPos = currGame.indexOf("^");
-            const moveTowardsPacman = Math.random() < 0.65;
+            const moveTowardsPacman = Math.random() < weight;
             if (ghostPos < currGame.indexOf("C")) {
                 if (fruitEnabled) {
                     move = moveTowardsPacman ? -1 : 1;
