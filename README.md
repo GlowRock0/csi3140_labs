@@ -9,3 +9,5 @@ Lab 3 - This repo
 Lab 4 - This repo
 
 Lab 5 - This repo
+
+Lab 6 - This repo
